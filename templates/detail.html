@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{{ book.title }}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            min-height: 100vh;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        p {
+            background-color: #fff;
+            padding: 15px;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            margin-bottom: 10px;
+            width: 100%;
+            max-width: 600px;
+            color: #333;
+        }
+
+        a {
+            text-decoration: none;
+            color: #3498db;
+            font-weight: bold;
+            margin-top: 20px;
+            align-self: center;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        button {
+            background-color: #3498db;
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            margin: 10px;
+        }
+
+        button:hover {
+            background-color: #2980b9;
+        }
+
+        .button-container {
+            display: flex;
+            justify-content: center;
+            width: 100%;
+        }
+
+        .button-container a,
+        .button-container button {
+            margin: 0 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>{{ book.title }}</h1>
+    <p>Author: {{ book.author }}</p>
+    <p>Author Key: {{ book.author_key }}</p>
+    <p>eBook Access: {{ book.ebook_access }}</p>
+    <p>First Publish Year: {{ book.publish_year }}</p>
+    <div class="button-container">
+        <a href="/">Back to list</a>
+        <a href="/books/{{ book.id }}/update"><button>Update</button></a>
+        <button onclick="deleteBook({{ book.id }})">Delete</button>
+    </div>
+
+    <script>
+        function deleteBook(bookId) {
+            fetch(`/books/${bookId}`, {
+                method: 'DELETE'
+            })
+            .then(response => {
+                if (response.ok) {
+                    window.location.href = '/';
+                } else {
+                    alert('Failed to delete the book.');
+                }
+            });
+        }
+    </script>
+</body>
+</html>
