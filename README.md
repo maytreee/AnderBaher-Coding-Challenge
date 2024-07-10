@@ -48,6 +48,7 @@ Setting Up the Project
 Prerequisites
 Ensure you have the following installed:
 
+
 Python 3.8+
 Git
 Heroku CLI
