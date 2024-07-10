@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>BOOKS FOR YOU</title>
+    <title>Book List</title>
     <style>
         body {
             font-family: Arial, sans-serif;
-            background-color: #f5f5f5;
+            background: linear-gradient(to right, #ece9e6, #ffffff),
+                url("path/to/your/background-image.jpg") no-repeat center center fixed;
+            background-size: cover;
             margin: 0;
             padding: 20px;
             display: flex;
@@ -18,65 +20,218 @@
         h1 {
             color: #333;
             margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
 
-        ul {
-            list-style-type: none;
-            padding: 0;
-            width: 100%;
-            max-width: 600px;
+        .controls {
+            margin-bottom: 20px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
         }
 
-        li {
-            background-color: #fff;
-            margin: 10px 0;
-            padding: 15px;
+        .controls select {
+            padding: 10px;
+            border: 1px solid #ccc;
             border-radius: 5px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-            transition: background-color 0.3s ease;
         }
 
-        li:hover {
-            background-color: #f0f0f0;
+        .book-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 20px;
+            max-width: 1200px;
+            width: 100%;
         }
 
-        a {
+        .book-card {
+            background-color: #ffffff;
+            width: 250px;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            text-align: center;
+            display: none; /* Hide all cards initially */
+        }
+
+        .book-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+        }
+
+        .book-title {
+            color: #333;
+            font-size: 18px;
+            margin: 15px 0;
+        }
+
+        .book-link {
             text-decoration: none;
-            color: #3498db;
+            color: #5a5a5a;
             font-weight: bold;
+            transition: color 0.3s ease;
         }
 
-        a:hover {
+        .book-link:hover {
             text-decoration: underline;
+            color: #3a3a3a;
         }
 
-        button {
-            background-color: #3498db;
+        .book-description {
+            font-size: 14px;
+            color: #777;
+            margin-bottom: 10px;
+        }
+
+        .create-button {
+            margin-top: 20px;
+            text-decoration: none; /* Ensure no underline on the link */
+        }
+
+        .create-button button {
+            background-color: #7f8c8d;
             color: #fff;
             border: none;
             padding: 10px 20px;
             border-radius: 5px;
             font-size: 16px;
             cursor: pointer;
-            transition: background-color 0.3s ease;
+            transition: background-color 0.3s ease, transform 0.3s ease;
         }
 
-        button:hover {
-            background-color: #2980b9;
+        .create-button button:hover {
+            background-color: #5a6d6f;
+            transform: scale(1.1);
         }
 
-        .create-button {
+        .pagination {
             margin-top: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .pagination-button {
+            background-color: #bdc3c7;
+            color: #fff;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.3s ease;
+        }
+
+        .pagination-button:hover {
+            background-color: #95a5a6;
+            transform: scale(1.1);
+        }
+
+        .pagination-button:disabled {
+            background-color: #e0e0e0;
+            color: #b0b0b0;
+            cursor: not-allowed;
+        }
+
+        .pagination-info {
+            font-size: 16px;
+            color: #333;
         }
     </style>
 </head>
 <body>
-    <h1>Book List</h1>
-    <ul>
-    {% for book in books %}
-        <li><a href="/books/{{ book.id }}">{{ book.title }}</a></li>
-    {% endfor %}
-    </ul>
-    <a href="/books/create" class="create-button"><button>Create</button></a>
+    <h1>
+        Book List
+        <select id="sort-select">
+            <option value="title-asc">Sort by Title (A-Z)</option>
+            <option value="title-desc">Sort by Title (Z-A)</option>
+            <option value="date-asc">Sort by Date (Oldest First)</option>
+            <option value="date-desc">Sort by Date (Newest First)</option>
+        </select>
+    </h1>
+    <div class="book-container" id="book-container">
+        {% for book in books %}
+        <div class="book-card" data-title="{{ book.title }}" data-date="{{ book.date }}">
+            <a href="/books/{{ book.id }}" class="book-link">
+                <div class="book-title">{{ book.title }}</div>
+                <div class="book-description">{{ book.description }}</div>
+            </a>
+        </div>
+        {% endfor %}
+    </div>
+    <div class="pagination">
+        <button class="pagination-button" id="prev-button" disabled>Previous</button>
+        <span id="page-indicator" class="pagination-info">Page 1 of 1</span>
+        <button class="pagination-button" id="next-button" disabled>Next</button>
+    </div>
+    <a href="/books/create" class="create-button">
+        <button>Add a new Book!</button>
+    </a>
+
+    <script>
+        const booksPerPage = 12;
+        const books = Array.from(document.querySelectorAll(".book-card"));
+        const totalPages = Math.ceil(books.length / booksPerPage);
+        let currentPage = 1;
+
+        function showPage(page) {
+            const start = (page - 1) * booksPerPage;
+            const end = start + booksPerPage;
+            books.forEach((book, index) => {
+                book.style.display = index >= start && index < end ? "block" : "none";
+            });
+            document.getElementById("page-indicator").textContent = `Page ${page} of ${totalPages}`;
+
+            // Update button states
+            document.getElementById("prev-button").disabled = page === 1;
+            document.getElementById("next-button").disabled = page === totalPages;
+        }
+
+        function sortBooks(criteria) {
+            const sortedBooks = books.sort((a, b) => {
+                const titleA = a.dataset.title.toLowerCase();
+                const titleB = b.dataset.title.toLowerCase();
+                const dateA = new Date(a.dataset.date);
+                const dateB = new Date(b.dataset.date);
+
+                if (criteria === "title-asc") return titleA.localeCompare(titleB);
+                if (criteria === "title-desc") return titleB.localeCompare(titleA);
+                if (criteria === "date-asc") return dateA - dateB;
+                if (criteria === "date-desc") return dateB - dateA;
+                return 0;
+            });
+
+            // Re-render sorted books
+            const container = document.getElementById("book-container");
+            container.innerHTML = "";
+            sortedBooks.forEach((book) => container.appendChild(book));
+            showPage(1); // Reset to first page after sorting
+        }
+
+        document.getElementById("prev-button").addEventListener("click", () => {
+            if (currentPage > 1) {
+                currentPage--;
+                showPage(currentPage);
+            }
+        });
+
+        document.getElementById("next-button").addEventListener("click", () => {
+            if (currentPage < totalPages) {
+                currentPage++;
+                showPage(currentPage);
+            }
+        });
+
+        document.getElementById("sort-select").addEventListener("change", (event) => {
+            sortBooks(event.target.value);
+        });
+
+        showPage(currentPage);
+    </script>
 </body>
 </html>
