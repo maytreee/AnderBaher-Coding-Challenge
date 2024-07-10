@@ -45,7 +45,7 @@ class BookResponse(BookBase):
     id: int
 
     class Config:
-        from_attributes = True
+        orm_mode = True
 
 app = FastAPI()
 
@@ -77,7 +77,10 @@ def create_book(title: str = Form(...), author: str = Form(...), author_key: str
     db.add(db_book)
     db.commit()
     db.refresh(db_book)
-    return RedirectResponse(url="/", status_code=303)
+    with open("./templates/index.html") as f:
+        template = Template(f.read())
+    books = db.query(Book).all()
+    return template.render(books=books)
 
 @app.get("/books/{book_id}", response_class=HTMLResponse)
 async def read_book(book_id: int):
@@ -99,7 +102,7 @@ async def update_book_form(book_id: int):
         template = Template(f.read())
     return template.render(book=book)
 
-@app.post("/books/{book_id}", response_model=BookResponse)
+@app.post("/books/{book_id}", response_class=HTMLResponse)
 async def update_book(book_id: int, request: Request, db: Session = Depends(get_db)):
     book_data = await request.json()
     db_book = db.query(Book).filter(Book.id == book_id).first()
@@ -109,7 +112,9 @@ async def update_book(book_id: int, request: Request, db: Session = Depends(get_
         setattr(db_book, key, value)
     db.commit()
     db.refresh(db_book)
-    return db_book
+    with open("./templates/detail.html") as f:
+        template = Template(f.read())
+    return template.render(book=db_book)
 
 @app.delete("/books/{book_id}")
 def delete_book(book_id: int, db: Session = Depends(get_db)):
